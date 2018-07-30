@@ -1,0 +1,86 @@
+resource_registry:
+  # Specify the relative/absolute path to the config files you want to use for override the default.
+  OS::TripleO::ComputeOvsDpdk::Net::SoftwareConfig: nic-configs/computeovsdpdk.yaml
+  OS::TripleO::Controller::Net::SoftwareConfig: nic-configs/controller.yaml
+  OS::TripleO::NodeExtraConfigPost: post-install.yaml
+
+parameter_defaults:
+  InternalApiNetCidr: 172.22.33.0/24
+  TenantNetCidr: 172.16.2.0/24
+  StorageNetCidr: 172.22.36.0/24
+  StorageMgmtNetCidr: 172.22.35.0/24
+  ExternalNetCidr: 172.21.0.0/24
+  InternalApiAllocationPools: [{'start': '172.22.33.10', 'end': '172.22.33.200'}]
+  StorageAllocationPools: [{'start': '172.22.36.10', 'end': '172.22.36.200'}]
+  StorageMgmtAllocationPools: [{'start': '172.22.35.10', 'end': '172.22.35.200'}]
+  TenantAllocationPools: [{'start': '172.16.2.10', 'end': '172.16.2.200'}]
+  ExternalAllocationPools: [{'start': '172.21.0.50', 'end': '172.21.0.200'}]
+  ExternalInterfaceDefaultRoute: 172.21.0.1 
+  InternalApiNetworkVlanID: 233
+  StorageNetworkVlanID: 236
+  StorageMgmtNetworkVlanID: 235
+  TenantNetworkVlanID: 237
+  ExternalNetworkVlanID: 10
+  ControlPlaneSubnetCidr: "24"
+  ControlPlaneDefaultRoute: 192.168.23.1 
+  EC2MetadataIp: 192.168.23.1
+  # Define the DNS servers (maximum 2) for the overcloud nodes
+  DnsServers: ["10.35.28.28","8.8.8.8"]
+  # May set to br-ex if using floating IPs only on native VLAN on bridge br-ex
+  NeutronExternalNetworkBridge: "''"
+  # The tunnel type for the tenant network (vxlan or gre). Set to '' to disable tunneling.
+  NeutronTunnelTypes: 'vxlan'
+  # The tenant network type for Neutron (vlan or vxlan).
+  #NeutronNetworkType: 'vlan'
+  NeutronNetworkType: 'vlan'
+  # The OVS logical->physical bridge mappings to use.
+  NeutronBridgeMappings: 'dpdk0:br-link0,dpdk1:br-link1,access:br-access'
+  OpenDaylightProviderMappings: 'dpdk0:br-link0,dpdk1:br-link1,access:br-access'
+  NeutronNetworkVLANRanges: 'dpdk0:100:200,dpdk1:100:200,access:100:200'
+  NeutronFlatNetworks: '*'
+  # Nova flavor to use.
+  OvercloudControllerFlavor: baremetal
+  OvercloudComputeFlavor: baremetal
+  #OvercloudCephStorageFlavor: ceph-storage 
+  #OvercloudSwiftStorageFlavor: swift-storage
+  #OvercloudControlFlavor: control
+  #OvercloudComputeOvsDpdkFlavor: compute
+  #Number of nodes to deploy.
+  ControllerCount: 1
+  ComputeOvsDpdkCount: 1
+  CephStorageCount: 0
+  ObjectStorageCount: 0
+  # Sets overcloud nodes custom names
+  # http://docs.openstack.org/developer/tripleo-docs/advanced_deployment/node_placement.html#custom-hostnames
+  ControllerHostnameFormat: 'controller-%index%'
+  ComputeHostnameFormat: 'compute-%index%'
+  CephStorageHostnameFormat: 'ceph-%index%'
+  ObjectStorageHostnameFormat: 'swift-%index%'
+  ControllerSchedulerHints:
+    'capabilities:node': 'controller-%index%'
+  NovaComputeSchedulerHints:
+    'capabilities:node': 'compute-%index%'
+  ##########################
+  # OVS DPDK configuration #
+  # ########################
+  ComputeOvsDpdkParameters:
+    OvsEnableDpdk: True
+    KernelArgs: default_hugepagesz=1GB hugepagesz=1G hugepages=32 iommu=pt intel_iommu=on isolcpus=2,4,6,8,10,12,14,16,26,28,30,32,34,36,38,40
+    TunedProfileName: "cpu-partitioning"
+    IsolCpusList: "2,4,6,8,10,12,14,16,26,28,30,32,34,36,38,40"
+    NovaVcpuPinSet: ['8,10,12,14,32,34,36,38']
+    NovaReservedHostMemory: 4096
+    OvsDpdkSocketMemory: "1024,1024"
+    OvsDpdkMemoryChannels: "4"
+    OvsDpdkCoreList: "16,40"
+    OvsPmdCoreList: "1,2,4,6,3,26,28,30"
+  # MTU global configuration
+  NeutronGlobalPhysnetMtu: 9000
+  # DHCP provide metadata route to VM.
+  NeutronEnableIsolatedMetadata: true
+  # DHCP always provides metadata route to VM.
+  NeutronEnableForceMetadata: true
+  # Configure the classname of the firewall driver to use for implementing security groups.
+  NeutronOVSFirewallDriver: openvswitch
+  SshServerOptions:
+    UseDns: 'no'
